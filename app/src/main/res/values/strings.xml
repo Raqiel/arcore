@@ -15,8 +15,8 @@
     <string name="failed_to_create_session">Failed to create AR session</string>
     <string name="camera_permission_needed">Camera permission is needed to run this application</string>
     <string name="model_grid_png">models/trigrid.png</string>
-    <string name="model_viking_obj">models/viking.obj</string>
-    <string name="model_viking_png">models/viking.png</string>
+    <string name="model_viking_obj">models/obj.obj</string>
+    <string name="model_viking_png">models/obj.jpg</string>
     <string name="model_cannon_obj">models/cannon.obj</string>
     <string name="model_target_obj">models/target.obj</string>
     <string name="model_cannon_png">models/cannon.png</string>

@@ -6,41 +6,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     tools:context=".MainActivity">
 
-    <RadioGroup
-        android:id="@+id/radioGroup"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:gravity="center"
-        android:orientation="horizontal"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
 
-        <RadioButton
-            android:id="@+id/radioViking"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:checked="true"
-            android:onClick="onRadioButtonClicked"
-            android:text="ei" />
-
-        <RadioButton
-            android:id="@+id/radioCannon"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:checked="false"
-            android:onClick="onRadioButtonClicked"
-            android:text="sei la n" />
-
-        <RadioButton
-            android:id="@+id/radioTarget"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:checked="false"
-            android:onClick="onRadioButtonClicked"
-            android:text="sei la" />
-
-    </RadioGroup>
 
     <android.opengl.GLSurfaceView
         android:id="@+id/surfaceView"
@@ -49,6 +15,6 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/radioGroup" />
+        app:layout_constraintTop_toTopOf="parent"/>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

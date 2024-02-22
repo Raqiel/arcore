@@ -1,6 +1,5 @@
 package com.example.arcore
 
-import android.annotation.SuppressLint
 import android.opengl.GLES20
 import android.opengl.GLSurfaceView
 import androidx.appcompat.app.AppCompatActivity
@@ -8,7 +7,6 @@ import android.os.Bundle
 import android.util.Log
 import android.view.GestureDetector
 import android.view.MotionEvent
-import android.view.View
 import android.widget.Toast
 import com.example.arcore.common.helpers.CameraPermissionHelper
 import com.example.arcore.common.helpers.DisplayRotationHelper
@@ -27,7 +25,6 @@ import com.google.ar.core.Frame
 import com.google.ar.core.HitResult
 import com.google.ar.core.Plane
 import com.google.ar.core.Point
-import com.google.ar.core.R
 import com.google.ar.core.Session
 import com.google.ar.core.TrackingState
 import com.google.ar.core.exceptions.CameraNotAvailableException
@@ -96,13 +93,13 @@ class MainActivity : AppCompatActivity(), GLSurfaceView.Renderer {
         setupSurfaceView()
     }
 
-    fun onRadioButtonClicked(view: View) {
-        when (view.id) {
-            com.example.arcore.R.id.radioCannon -> mode = Mode.CANNON
-            com.example.arcore.R.id.radioTarget -> mode = Mode.TARGET
-            else -> mode = Mode.VIKING
-        }
-    }
+//    fun onRadioButtonClicked(view: View) {
+//        when (view.id) {
+//            com.example.arcore.R.id.radioCannon -> mode = Mode.CANNON
+//            com.example.arcore.R.id.radioTarget -> mode = Mode.TARGET
+//            else -> mode = Mode.VIKING
+//        }
+//    }
 
     private fun setupSurfaceView() {
         // Set up renderer.
