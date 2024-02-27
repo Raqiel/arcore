@@ -1,14 +1,17 @@
 package com.example.arcore
 
+import android.content.SharedPreferences
 import android.opengl.GLES20
 import android.opengl.GLSurfaceView
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
 import android.view.GestureDetector
 import android.view.MotionEvent
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
+import androidx.appcompat.app.AppCompatActivity
 import com.example.arcore.common.helpers.CameraPermissionHelper
+import com.example.arcore.common.helpers.DepthSettings
 import com.example.arcore.common.helpers.DisplayRotationHelper
 import com.example.arcore.common.helpers.FullScreenHelper
 import com.example.arcore.common.helpers.SnackbarHelper
@@ -21,6 +24,7 @@ import com.example.arcore.common.rendering.PlaneRenderer
 import com.example.arcore.common.rendering.PointCloudRenderer
 import com.google.ar.core.ArCoreApk
 import com.google.ar.core.Camera
+import com.google.ar.core.Config
 import com.google.ar.core.Frame
 import com.google.ar.core.HitResult
 import com.google.ar.core.Plane
@@ -43,23 +47,31 @@ class MainActivity : AppCompatActivity(), GLSurfaceView.Renderer {
 
     private val TAG: String = MainActivity::class.java.simpleName
 
+
     private var installRequested = false
+    private var useDepthForOcclusion = false
+    private val sharedPreferences: SharedPreferences? = null
 
     private var mode: Mode = Mode.VIKING
 
     private var session: Session? = null
 
-    // Tap handling and UI.
+    // Gesture Detector é usado pra detectar gestos na tela
     private lateinit var gestureDetector: GestureDetector
+    //gerencia estado de rastreamento do AR
     private lateinit var trackingStateHelper: TrackingStateHelper
+    //lida com a tela quando é rotacionada
     private lateinit var displayRotationHelper: DisplayRotationHelper
+    //mensagem na tela
     private val messageSnackbarHelper: SnackbarHelper = SnackbarHelper()
 
-
+    //classe que fornece uma superficie de desenho open GLES onde pode renderizar uma cena de graficos 3d ou 2d
     private lateinit var surfaceView: GLSurfaceView
 
 
+    //lida com a renderização, sombras, vertices, texturas e etc
     private val backgroundRenderer: BackgroundRenderer = BackgroundRenderer()
+
     private val planeRenderer: PlaneRenderer = PlaneRenderer()
     private val pointCloudRenderer: PointCloudRenderer = PointCloudRenderer()
 
@@ -72,25 +84,49 @@ class MainActivity : AppCompatActivity(), GLSurfaceView.Renderer {
     private var cannonAttachment: PlaneAttachment? = null
     private var targetAttachment: PlaneAttachment? = null
 
-    // Temporary matrix allocated here to reduce number of allocations and taps for each frame.
+    // Matriz temporária alocada aqui para reduzir o número de alocações e toques para cada quadro.
     private val maxAllocationSize = 16
     private val anchorMatrix = FloatArray(maxAllocationSize)
+    //controla os objetos de acordo com os cliques
     private val queuedSingleTaps = ArrayBlockingQueue<MotionEvent>(maxAllocationSize)
-
+    val depthSettings = DepthSettings()
     override fun onCreate(savedInstanceState: Bundle?) {
 //        setTheme(R.style.AppTheme)
 
         super.onCreate(savedInstanceState)
         setContentView(com.example.arcore.R.layout.activity_main)
         surfaceView = findViewById(com.example.arcore.R.id.surfaceView)
+        depthSettings.onCreate(this)
 
         trackingStateHelper = TrackingStateHelper(this@MainActivity)
         displayRotationHelper = DisplayRotationHelper(this@MainActivity)
 
         installRequested = false
-
+        showOcclusionDialogIfNeeded()
         setupTapDetector()
         setupSurfaceView()
+
+
+
+    }
+    fun showOcclusionDialogIfNeeded() {
+        val session = session ?: return
+        val isDepthSupported = session.isDepthModeSupported(Config.DepthMode.AUTOMATIC)
+        if (!this.depthSettings.shouldShowDepthEnableDialog() || !isDepthSupported) {
+            return // Don't need to show dialog.
+        }
+
+        // Asks the user whether they want to use depth-based occlusion.
+        AlertDialog.Builder(this)
+            .setTitle("titulo")
+            .setMessage("Mensagem")
+            .setPositiveButton("Confirmar") { _, _ ->
+                this.depthSettings.setUseDepthForOcclusion(true)
+            }
+            .setNegativeButton("Declinar") { _, _ ->
+                this.depthSettings.setUseDepthForOcclusion(false)
+            }
+            .show()
     }
 
 //    fun onRadioButtonClicked(view: View) {
@@ -115,6 +151,9 @@ class MainActivity : AppCompatActivity(), GLSurfaceView.Renderer {
     private fun setupTapDetector() {
         gestureDetector = GestureDetector(this, object : GestureDetector.SimpleOnGestureListener() {
             override fun onSingleTapUp(e: MotionEvent): Boolean {
+
+
+
                 onSingleTap(e)
                 return true
             }
@@ -141,6 +180,7 @@ class MainActivity : AppCompatActivity(), GLSurfaceView.Renderer {
 
         try {
             session?.resume()
+            showOcclusionDialogIfNeeded()
         } catch (e: CameraNotAvailableException) {
             messageSnackbarHelper.showError(this@MainActivity, getString(com.example.arcore.R.string.camera_not_available))
             session = null
@@ -154,6 +194,7 @@ class MainActivity : AppCompatActivity(), GLSurfaceView.Renderer {
     private fun setupSession(): Boolean {
         var exception: Exception? = null
         var message: String? = null
+        // função p ver se a sessão foi instalada
 
         try {
             when (ArCoreApk.getInstance().requestInstall(this@MainActivity, !installRequested)) {
@@ -328,18 +369,25 @@ class MainActivity : AppCompatActivity(), GLSurfaceView.Renderer {
                     lightIntensity
                 )
 
-                drawObject(
-                    targetObject,
-                    targetAttachment,
-                    Mode.TARGET.scaleFactor,
-                    projectionMatrix,
-                    viewMatrix,
-                    lightIntensity
-                )
             } catch (t: Throwable) {
                 Log.e(TAG, getString(com.example.arcore.R.string.exception_on_opengl), t)
             }
         }
+    }
+
+    fun setUseDepthForOcclusion(enable: Boolean) {
+        if (enable == useDepthForOcclusion) {
+            return  // No change.
+        }
+
+        // Updates the stored default settings.
+        useDepthForOcclusion = enable
+        val editor = sharedPreferences!!.edit()
+        editor.putBoolean(
+            DepthSettings.SHARED_PREFERENCES_USE_DEPTH_FOR_OCCLUSION,
+            useDepthForOcclusion
+        )
+        editor.apply()
     }
 
     private fun isInTrackingState(camera: Camera): Boolean {
